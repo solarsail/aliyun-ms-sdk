@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::error::IncorrectTypeError;
+use crate::error::Error;
 
 #[derive(Debug)]
 pub struct Response {
@@ -8,12 +8,38 @@ pub struct Response {
 }
 
 impl Response {
-    pub fn send_sms_response(&self) -> Result<SendSmsResp, IncorrectTypeError> {
-        serde_json::from_str(&self.resp_str).map_err(|_| IncorrectTypeError)
+    pub fn send_sms_response(&self) -> Result<SendSmsResp, Error> {
+        let r = serde_json::from_str::<SendSmsResp>(&self.resp_str)
+            .map_err(|_| Error::IncorrectTypeError);
+        r.and_then(|resp| {
+            if resp.code == "OK" {
+                Ok(resp)
+            } else {
+                let message = format!("{:?} {}", resp.biz_id, resp.message);
+                Err(Error::ApiError {
+                    code: resp.code,
+                    request_id: resp.request_id,
+                    message,
+                })
+            }
+        })
     }
 
-    pub fn single_call_by_tts_response(&self) -> Result<SingleCallByTtsResp, IncorrectTypeError> {
-        serde_json::from_str(&self.resp_str).map_err(|_| IncorrectTypeError)
+    pub fn single_call_by_tts_response(&self) -> Result<SingleCallByTtsResp, Error> {
+        let r = serde_json::from_str::<SingleCallByTtsResp>(&self.resp_str)
+            .map_err(|_| Error::IncorrectTypeError);
+        r.and_then(|resp| {
+            if resp.code == "OK" {
+                Ok(resp)
+            } else {
+                let message = format!("{:?} {}", resp.call_id, resp.message);
+                Err(Error::ApiError {
+                    code: resp.code,
+                    request_id: resp.request_id,
+                    message,
+                })
+            }
+        })
     }
 }
 

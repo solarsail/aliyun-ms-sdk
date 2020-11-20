@@ -1,4 +1,4 @@
-use crate::{action::*, error::RequestError, response::Response, sign::make_signature, ParamVec};
+use crate::{action::*, error::Error, response::Response, sign::make_signature, ParamVec};
 
 pub enum ApiModule {
     Sms(SmsAction),
@@ -67,7 +67,7 @@ impl Request {
         p
     }
 
-    pub async fn send(&self) -> Result<Response, RequestError> {
+    pub async fn send(&self) -> Result<Response, Error> {
         let (sign, params) =
             make_signature(self.module.method(), self.key, self.secret, self.params());
         #[cfg(test)]
